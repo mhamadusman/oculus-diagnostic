@@ -11,10 +11,10 @@ export default function Home() {
     window.particlesJS("particles-js", {
       particles: {
         number: {
-          value: 100,
+          value: 200,
           density: {
             enable: true,
-            value_area: 800,
+            value_area: 1000,
           },
         },
         color: {
@@ -28,11 +28,11 @@ export default function Home() {
           },
         },
         opacity: {
-          value: 0.5,
+          value: .9,
           random: true,
         },
         size: {
-          value: 5,
+          value: 3,
           random: true,
         },
         line_linked: {
@@ -50,7 +50,7 @@ export default function Home() {
           straight: false,
           out_mode: "out",
           attract: {
-            enable: false,
+            enable: true,
             rotateX: 600,
             rotateY: 1200,
           },
