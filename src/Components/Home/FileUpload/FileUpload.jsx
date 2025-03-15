@@ -1,56 +1,30 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, Check, Image as ImageIcon, AlertCircle, ArrowRight } from 'lucide-react';
+import { Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const FileUpload = () => {
-  const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploading, setUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [error, setError] = useState('');
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg'];
-  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+  const handleFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreviewUrl(reader.result);
+      simulateUpload();
+    };
+    reader.readAsDataURL(file);
   };
 
-  const validateFile = (file) => {
-    setError('');
-    
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Only JPG/JPEG files are allowed');
-      return false;
-    }
-    
-    if (file.size > MAX_SIZE) {
-      setError('File size must be less than 10MB');
-      return false;
-    }
-    
-    return true;
-  };
-
-  const simulateUpload = (file) => {
-    setUploading(true);
+  const simulateUpload = () => {
     setUploadProgress(0);
-    
     const interval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setUploading(false);
           setUploadComplete(true);
           return 100;
         }
@@ -59,155 +33,91 @@ const FileUpload = () => {
     }, 100);
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleChange = (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
-    }
-  };
-
-  const handleFile = (file) => {
-    if (!validateFile(file)) return;
-    
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPreviewUrl(reader.result);
-    };
-    reader.readAsDataURL(file);
-    simulateUpload(file);
-  };
-
-  const onButtonClick = () => {
-    inputRef.current.click();
-  };
-
-  const resetUpload = () => {
-    setPreviewUrl(null);
-    setUploadProgress(0);
-    setUploading(false);
-    setUploadComplete(false);
-    setError('');
-  };
-
-  const goToResults = () => {
-    navigate('/result');
-  };
-
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-gray-50 font-sans">
-      <div className="w-full max-w-xl p-8">
-        <div
-          className={`relative border-2 border-dashed rounded-xl p-8 transition-all
-            ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-white'}
-            ${uploadComplete ? 'border-green-400' : ''}
-            ${error ? 'border-red-400' : ''}`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
+    <div className=" lg:mt-14 min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      {/* Background pattern */}
+      <div className="absolute inset-0 z-0 opacity-10">
+        <div 
+          className="absolute inset-0 bg-repeat bg-[length:20px_20px]" 
+          style={{backgroundImage: "radial-gradient(circle, #6366f1 1px, transparent 1px)"}}
+        ></div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-7xl mx-auto bg-white rounded-md shadow-lg p-8 relative z-10"
+      >
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-sm text-gray-900">Upload Your OCT Image</h1>
+          <p className="text-gray-600 mt-2">Image formate must be .JPG or .PNG</p>
+        </div>
+
+        <div 
+          onClick={() => inputRef.current.click()}
+          className="relative cursor-pointer group"
         >
           <input
-            ref={inputRef}
             type="file"
+            ref={inputRef}
             className="hidden"
-            onChange={handleChange}
-            accept=".jpg,.jpeg"
+            onChange={(e) => handleFile(e.target.files[0])}
+            accept=".jpg,.jpeg,.png"
           />
 
-          {error && (
-            <div className="absolute top-4 left-4 right-4 bg-red-50 text-red-600 px-4 py-2 rounded-lg flex items-center">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              {error}
-            </div>
-          )}
-
           {!previewUrl ? (
-            <div className="text-center">
-              <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="mt-4">
-                <button
-                  onClick={onButtonClick}
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Upload a file
-                </button>
-                <span className="text-gray-500"> or drag and drop</span>
+            <div className="border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 p-10 flex flex-col items-center justify-center max-h-96 transition-all hover:border-gray-900">
+              <div className="bg-gray-900 text-white p-4 rounded-full mb-4">
+                <UploadCloud className="w-10 h-10" />
               </div>
-              <p className="mt-2 text-sm text-gray-500">Only JPG/JPEG files up to 10MB</p>
+              <p className="text-xl font-medium text-gray-900 mb-2">
+                Drag and drop your file here
+              </p>
+              <p className="text-gray-500 mb-6">or click to browse files</p>
+              <button className="bg-gradient-to-r from-gray-900 to-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-all hover:from-gray-800 hover:to-gray-300">
+                Select X-Ray Image
+              </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="object-contain w-full h-full"
-                />
-                <button
-                  onClick={resetUpload}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-gray-900/50 text-white hover:bg-gray-900/75 transition-colors"
-                >
-                  <X className="h-4 w-4" />
+            <div className="border-2 border-dashed border-gray-400 rounded-lg overflow-hidden h-80 relative group">
+              <img 
+                src={previewUrl} 
+                alt="X-Ray preview" 
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button className="bg-gradient-to-r from-gray-900 to-gray-400 text-white px-6 py-3 rounded-lg font-medium">
+                  Change Image
                 </button>
-              </div>
-              
-              <div className="relative pt-1">
-                <div className="flex mb-2 items-center justify-between">
-                  <div>
-                    {uploadComplete ? (
-                      <span className="text-sm font-semibold inline-flex items-center text-green-600">
-                        <Check className="h-4 w-4 mr-1" /> Upload Complete
-                      </span>
-                    ) : (
-                      <span className="text-sm font-semibold inline-flex items-center text-blue-600">
-                        <Upload className="h-4 w-4 mr-1" /> Uploading...
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold text-blue-700">
-                      {uploadProgress}%
-                    </span>
-                  </div>
-                </div>
-                <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-100">
-                  <div
-                    style={{ width: `${uploadProgress}%` }}
-                    className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500
-                      ${uploadComplete ? 'bg-green-500' : 'bg-blue-500'}`}
-                  />
-                </div>
               </div>
             </div>
           )}
 
-          {uploadComplete && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4"
-            >
-              <button
-                onClick={goToResults}
-                className="w-full bg-green-600 text-white rounded-lg px-4 py-3 flex items-center justify-center space-x-2 hover:bg-green-700 transition-colors"
-              >
-                <span>Check Results</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </motion.div>
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="mt-6">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-gray-900 to-gray-400 transition-all duration-300" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-center mt-2 text-gray-700">{`Processing: ${uploadProgress}%`}</p>
+            </div>
           )}
         </div>
-      </div>
+
+        {uploadComplete && (
+          <button
+            onClick={() => navigate('/result')}
+            className="mt-6 w-full bg-gradient-to-r from-gray-900 to-gray-400 text-white py-4 rounded-lg hover:from-gray-800 hover:to-gray-300 transition-all font-medium text-lg"
+          >
+            View Analysis Results
+          </button>
+        )}
+
+       
+      </motion.div>
     </div>
   );
 };

@@ -1,15 +1,42 @@
-import React from "react";
-import { NavLink, Link } from "react-router-dom";
-import NavItem from "./NavItem";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
+  const [visible, setVisible] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY.current) {
+        setVisible(false);
+      } else {
+        setVisible(true);
+      }
+
+      setScrolled(currentScrollY > 50);
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="w-full lg:bg-white ">
-      <nav className="container mx-0 px-4 py-2">
-        <div className="hidden lg:flex items-center justify-between h-12">
-          {/* Logo Container */}
+    <header
+      className={`hidden lg:inline fixed top-0 left-1/2 -translate-x-1/2 w-10/12 transition-transform duration-700 z-50 ${
+        visible ? "translate-y-0" : "-translate-y-96"
+      }`}
+    >
+      <nav className="w-full rounded-full transition-all duration-300">
+        <div className={`flex items-center justify-between px-3  rounded-full transition-all duration-300   ${
+          scrolled ? "bg-white shadow-lg" : "bg-transparent"
+        }`}>
+          {/* Logo */}
           <div className="flex-shrink-0 w-48">
-            <Link to="home">
+            <Link to="/">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 200 60"
@@ -17,14 +44,15 @@ const Navbar = () => {
               >
                 <defs>
                   <linearGradient
-                    id="blueGradient"
+                    id="grayGradient"
                     x1="0%"
                     y1="0%"
                     x2="100%"
                     y2="0%"
                   >
-                    <stop offset="0%" style={{ stopColor: "#0077B6" }} />
-                    <stop offset="100%" style={{ stopColor: "#023E8A" }} />
+                    <stop offset="0%" stopColor="#111827" />
+                    <stop offset="50%" stopColor="#4B5563" />
+                    <stop offset="100%" stopColor="#9CA3AF" />
                   </linearGradient>
                 </defs>
 
@@ -33,7 +61,7 @@ const Navbar = () => {
                   y="28"
                   fontFamily="Poppins, Arial, sans-serif"
                   fontSize="24"
-                  fill="url(#blueGradient)"
+                  fill="url(#grayGradient)"
                   textAnchor="middle"
                   fontWeight="750"
                   letterSpacing="7"
@@ -46,7 +74,7 @@ const Navbar = () => {
                   y="45"
                   fontFamily="Poppins, Arial, sans-serif"
                   fontSize="10"
-                  fill="url(#blueGradient)"
+                  fill="url(#grayGradient)"
                   textAnchor="middle"
                   letterSpacing="6"
                 >
@@ -57,23 +85,34 @@ const Navbar = () => {
           </div>
 
           {/* Navigation Links */}
-          <div className="flex space-x-2">
-            <NavItem to="home" label="Home"/>
-            <NavItem to="profile" label="Profile"/>
-            <NavItem to="result" label = "results"/>
+          <div className="flex space-x-6 font-serif text-sm text-[#8A929E] ">
+            <Link to="/home" className="hover:underline hover:text-gray-700">
+              Home
+            </Link>
+            <Link to="/upload" className="hover:underline hover:text-gray-700">
+              Upload
+            </Link>
+            <Link to="/records" className="hover:underline hover:text-gray-700">
+              Records
+            </Link>
+            <Link to="/result" className="hover:underline hover:text-gray-700">
+              Results
+            </Link>
           </div>
 
-          <div className="flex space-x-2 items-center justify-center">
-            <Link to="login">
-              <div className="login-buttons ring-1 px-3 w-28 text-center py-3">
-                Login
-              </div>
+          {/* Auth Buttons */}
+          <div className="flex space-x-2">
+            <Link
+              to="/login"
+              className="px-4 py-2 text-center rounded-full text-white  bg-gray-800 hover:bg-gray-700 transition-all duration-200 font-medium"
+            >
+              Log In
             </Link>
-
-            <Link to="signup">
-              <div className="login-buttons ring-1 px-3 w-28 text-center py-3">
-                SignUp
-              </div>
+            <Link
+              to="/signup"
+              className="px-4 py-2  text-gray-800 rounded-full bg-gray-100 hover:bg-gray-500  transition-all duration-200 font-medium"
+            >
+              Sign Up
             </Link>
           </div>
         </div>

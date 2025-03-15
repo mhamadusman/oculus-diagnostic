@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Jaro:opsz@6..72&family=Sevillana&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -6,29 +5,57 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base{
-    *{
-        padding: 0px;
-        margin: 0px;
-        box-sizing: border-box;
-    }
-    html{
-        
-    }
+@layer base {
+  * {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth; /* Smooth scrolling */
+    font-family: 'Poppins', sans-serif; /* Set default font */
+  }
+
+  body {
+    @apply bg-softGray text-darkGray; /* Use Tailwind colors */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
 }
 
 @layer components {
-    .login-buttons {
-        @apply  rounded-full  hover:bg-customBlue hover:cursor-pointer hover:text-white text-xs font-poppin transition-all ease-in;
-    }
-    .custome-link {
-        @apply font-poppin inline-block px-5 py-1 hover:bg-slate-200 hover:text-white hover:rounded-full transition-all duration-300 ease-in-out;
-    }
-    .active-class {
-        @apply text-customBlue ring-1 rounded-full;
-    }
+  .login-buttons {
+    @apply rounded-full hover:bg-customBlue hover:cursor-pointer hover:text-white text-xs font-poppin transition-all ease-in;
+  }
 
-    .button{
-        @apply px-5 py-2 border rounded-sm ring-1 font-sans mt-2 hover:bg-customBlue transition-all duration-100 ease-in
-    }
+  .custome-link {
+    @apply font-poppin inline-block px-5 py-1 hover:bg-slate-200 hover:text-black hover:rounded-full transition-all duration-300 ease-in-out;
+  }
+
+  .active-class {
+    @apply text-black bg-slate-100 rounded-full ;
+  }
+
+  .button {
+    @apply px-5 py-2 border rounded-sm ring-1 font-sans mt-2 hover:bg-customBlue transition-all duration-100 ease-in;
+  }
+
+  /* Gradient utility class */
+  .gradient-bg {
+    @apply bg-gradient-to-r from-gradientStart to-gradientEnd;
+  }
 }
