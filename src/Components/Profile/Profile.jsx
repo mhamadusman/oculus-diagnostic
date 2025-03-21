@@ -32,7 +32,7 @@ const Profile = () => {
     try {
       // Try to use currentUser first if available
       if (currentUser && Object.keys(currentUser).length > 0) {
-        console.log("Using existing currentUser data:", currentUser);
+        console.log("Using existing currentUser data in loadUserData api current:", currentUser);
         updateProfileFromUser(currentUser);
         setLoading(false);
       } else {
@@ -53,7 +53,7 @@ const Profile = () => {
   
   // Helper function to update profile state from user object
   const updateProfileFromUser = (user) => {
-    console.log("Updating profile from user:", user);
+    console.log("Updating profile pic from current user:", user);
     if (!user) return;
     
     // Get the photo URL and prepend base URL if it's a relative path
@@ -293,7 +293,7 @@ const Profile = () => {
                   </label>
                   <input
                     type="text"
-                    value={profileData.specialty}
+                    value={profileData.speciality}
                     onChange={(e) => setProfileData({...profileData, speciality: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"

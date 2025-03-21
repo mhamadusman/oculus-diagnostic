@@ -67,9 +67,7 @@ export const AuthProvider = ({ children }) => {
       const updatedProfile = await authService.updateProfile(profileData);
       console.log("API response:", updatedProfile);
       
-      // Replace this line:
-      // setCurrentUser(profileData)
-      // With this:
+      
       setCurrentUser(prevUser => ({ ...prevUser, ...updatedProfile }));
       
       return updatedProfile;
