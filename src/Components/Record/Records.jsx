@@ -1,20 +1,20 @@
+// src/components/Records.jsx
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { octImageService } from "../../Services/api"; // Adjust the path to your API service
+import { Link } from "react-router-dom";
+import { octImageService } from "../../Services/api";
 
 const Records = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [images, setImages] = useState([]); // Store fetched images
-  const [loading, setLoading] = useState(true); // Track loading state
-  const [error, setError] = useState(null); // Track errors
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch images from the API when the component mounts
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const data = await octImageService.getImages(); // Fetch doctor's images
-        setImages(data); // Assuming data is an array of image objects
+        const data = await octImageService.getImages();
+        setImages(data);
       } catch (err) {
         setError('Failed to fetch image records.');
         console.error(err);
@@ -25,36 +25,18 @@ const Records = () => {
     fetchImages();
   }, []);
 
-  // Filter images based on search term and status
+  // Remove status filter since OCTImage model has no status field
   const filteredImages = images.filter(
     (image) =>
       (image.custom_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        image.id.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (statusFilter === "" || image.status === statusFilter)
+        image.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Monitoring":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  // Animation variants (unchanged from your original code)
+  // Animation variants (unchanged)
   const pageVariants = {
     initial: { opacity: 0 },
-    animate: { 
-      opacity: 1,
-      transition: { duration: 0.7, ease: "easeInOut" }
-    },
-    exit: { 
-      opacity: 0,
-      transition: { duration: 0.3, ease: "easeOut" }
-    }
+    animate: { opacity: 1, transition: { duration: 0.7, ease: "easeInOut" } },
+    exit: { opacity: 0, transition: { duration: 0.3, ease: "easeOut" } }
   };
 
   const containerVariants = {
@@ -77,7 +59,6 @@ const Records = () => {
     show: (i) => ({ opacity: 1, y: 0, scale: 1, transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } })
   };
 
-  // Loading and error states
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -118,32 +99,15 @@ const Records = () => {
           >
             OCT Image Records
           </motion.h1>
-          <motion.div 
+          <motion.input
             variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 w-full md:w-auto"
-          >
-            <motion.input
-              variants={itemVariants}
-              whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.2)" }}
-              type="text"
-              placeholder="Search images..."
-              className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <motion.select 
-              variants={itemVariants}
-              whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.2)" }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Monitoring">Monitoring</option>
-              <option value="Archived">Archived</option>
-            </motion.select>
-          </motion.div>
+            whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.2)" }}
+            type="text"
+            placeholder="Search images..."
+            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </motion.div>
 
         {/* Table view for medium screens and larger */}
@@ -159,7 +123,6 @@ const Records = () => {
                     <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Image ID</motion.th>
                     <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Custom ID</motion.th>
                     <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Upload Date</motion.th>
-                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</motion.th>
                     <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</motion.th>
                   </motion.tr>
                 </thead>
@@ -179,23 +142,12 @@ const Records = () => {
                         <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{image.custom_id || 'N/A'}</motion.td>
                         <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{image.upload_date}</motion.td>
                         <motion.td variants={itemVariants} className="px-4 py-3">
-                          <motion.span 
-                            variants={itemVariants}
-                            whileHover={{ y: -2 }}
-                            className={`px-3 py-1 text-sm rounded-full ${getStatusClass(image.status)}`}
-                          >
-                            {image.status || 'Unknown'}
-                          </motion.span>
-                        </motion.td>
-                        <motion.td variants={itemVariants} className="px-4 py-3">
-                          <motion.button 
-                            variants={itemVariants}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.98 }}
+                          <Link
+                            to={`/records/${image.id}`}
                             className="bg-gradient-to-r from-gray-900 to-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all duration-300"
                           >
                             View Details
-                          </motion.button>
+                          </Link>
                         </motion.td>
                       </motion.tr>
                     ))}
@@ -227,13 +179,6 @@ const Records = () => {
                   >
                     {image.id}
                   </motion.span>
-                  <motion.span 
-                    variants={itemVariants}
-                    whileHover={{ y: -2 }}
-                    className={`px-3 py-1 text-xs rounded-full ${getStatusClass(image.status)}`}
-                  >
-                    {image.status || 'Unknown'}
-                  </motion.span>
                 </div>
                 <motion.h3 
                   variants={itemVariants}
@@ -245,19 +190,17 @@ const Records = () => {
                   <motion.div variants={itemVariants} className="text-gray-500">Upload Date:</motion.div>
                   <motion.div variants={itemVariants} className="text-gray-900">{image.upload_date}</motion.div>
                 </div>
-                <motion.button 
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-gray-900 to-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all duration-300"
+                <Link
+                  to={`/records/${image.id}`}
+                  className="w-full bg-gradient-to-r from-gray-900 to-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all duration-300 text-center block"
                 >
                   View Details
-                </motion.button>
+                </Link>
               </motion.div>
             ))}
           </motion.div>
         </AnimatePresence>
-        
+
         <AnimatePresence>
           {filteredImages.length === 0 && (
             <motion.div 

@@ -12,7 +12,8 @@ import Result from './Components/Result/Result';
 import LoginForm from './Components/Auth/LoginForm';
 import Records from './Components/Record/Records'
 import SignUpForm from './Components/Auth/SignUpForm';
-import FileUpload from './Components/Home/FileUpload/FileUpload'
+import FileUpload from './Components/Home/FileUpload/FileUpload';
+import ImageDetails from './Components/ImageDetaile/ImageDetails';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -32,6 +33,7 @@ const router = createBrowserRouter(
           <Route path='/profile' element={<Profile />} />
           <Route path='/result' element={<Result />} />
           <Route path='/records' element={<Records />} />
+          <Route path='/records/:id' element={<ImageDetails />} />
           <Route path='/upload' element={<FileUpload />} />
     
         </Route>

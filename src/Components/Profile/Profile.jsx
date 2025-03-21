@@ -152,6 +152,8 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  
   // Debug output
   useEffect(() => {
     console.log("Profile data updated:", profileData);
