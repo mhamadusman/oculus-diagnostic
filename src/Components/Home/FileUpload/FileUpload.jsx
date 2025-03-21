@@ -2,44 +2,50 @@ import React, { useState, useRef } from 'react';
 import { Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { octImageService } from '../../../Services/api'; // Adjust the path to your API service
 
 const FileUpload = () => {
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadComplete, setUploadComplete] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loading, setLoading] = useState(false); // Track loading state
+  const [error, setError] = useState(null); // Track errors
+  const [previewUrl, setPreviewUrl] = useState(null); // Image preview
+  const [uploadComplete, setUploadComplete] = useState(false); // Track upload completion
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
+  // Handle file selection and generate preview
   const handleFile = (file) => {
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewUrl(reader.result);
-      simulateUpload();
     };
     reader.readAsDataURL(file);
   };
 
-  const simulateUpload = () => {
-    setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploadComplete(true);
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 100);
+  // Handle the actual upload to the API
+  const handleUpload = async () => {
+    if (!inputRef.current.files[0]) return; // Ensure a file is selected
+    setLoading(true); // Show loading indicator
+    setError(null); // Reset any previous errors
+    try {
+      const file = inputRef.current.files[0];
+      const response = await octImageService.uploadImage(file); // Call API to upload image
+      console.log('Image uploaded:', response);
+      setUploadComplete(true); // Mark upload as complete
+    } catch (err) {
+      setError('Failed to upload image. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading(false); // Hide loading indicator
+    }
   };
 
   return (
-    <div className=" lg:mt-14 min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="lg:mt-14 min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 z-0 opacity-10">
         <div 
           className="absolute inset-0 bg-repeat bg-[length:20px_20px]" 
-          style={{backgroundImage: "radial-gradient(circle, #6366f1 1px, transparent 1px)"}}
+          style={{ backgroundImage: "radial-gradient(circle, #6366f1 1px, transparent 1px)" }}
         ></div>
       </div>
 
@@ -51,7 +57,7 @@ const FileUpload = () => {
       >
         <div className="text-center mb-8">
           <h1 className="text-3xl font-sm text-gray-900">Upload Your OCT Image</h1>
-          <p className="text-gray-600 mt-2">Image formate must be .JPG or .PNG</p>
+          <p className="text-gray-600 mt-2">Image format must be .JPG or .PNG</p>
         </div>
 
         <div 
@@ -76,14 +82,14 @@ const FileUpload = () => {
               </p>
               <p className="text-gray-500 mb-6">or click to browse files</p>
               <button className="bg-gradient-to-r from-gray-900 to-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-all hover:from-gray-800 hover:to-gray-300">
-                Select X-Ray Image
+                Select OCT Image
               </button>
             </div>
           ) : (
             <div className="border-2 border-dashed border-gray-400 rounded-lg overflow-hidden h-80 relative group">
               <img 
                 src={previewUrl} 
-                alt="X-Ray preview" 
+                alt="OCT preview" 
                 className="w-full h-full object-contain"
               />
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -93,20 +99,33 @@ const FileUpload = () => {
               </div>
             </div>
           )}
-
-          {uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="mt-6">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-gray-900 to-gray-400 transition-all duration-300" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-center mt-2 text-gray-700">{`Processing: ${uploadProgress}%`}</p>
-            </div>
-          )}
         </div>
 
+        {/* Loading indicator with three animated dots */}
+        {loading && (
+          <div className="mt-6 flex justify-center items-center">
+            <div className="flex space-x-2">
+              <div className="w-3 h-3 bg-gray-900 rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-gray-900 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-3 h-3 bg-gray-900 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            </div>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && <p className="text-center text-red-500 mt-4">{error}</p>}
+
+        {/* Upload button appears after preview is set */}
+        {previewUrl && !loading && !uploadComplete && (
+          <button
+            onClick={handleUpload}
+            className="mt-6 w-full bg-gradient-to-r from-gray-900 to-gray-400 text-white py-4 rounded-lg hover:from-gray-800 hover:to-gray-300 transition-all font-medium text-lg"
+          >
+            Upload Image
+          </button>
+        )}
+
+        {/* View results button after upload completes */}
         {uploadComplete && (
           <button
             onClick={() => navigate('/result')}
@@ -115,8 +134,6 @@ const FileUpload = () => {
             View Analysis Results
           </button>
         )}
-
-       
       </motion.div>
     </div>
   );

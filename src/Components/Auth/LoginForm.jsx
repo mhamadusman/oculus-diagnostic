@@ -1,15 +1,30 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '../Auth/AuthContext/AuthContext'; // Import AuthContext
 
 export default function LoginForm() {
-  // React State to Store Form Data
-  const [email, setEmail] = useState("");
+  const [usename, setusename] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth(); // Get login function from AuthContext
+  const navigate = useNavigate(); // Hook for redirection
 
   // Handle Form Submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Data:", { email, password });
+    setError(null);
+    setLoading(true);
+
+    try {
+      await login({ username: usename, password: password });
+      navigate("/profile"); // Redirect to dashboard after login
+    } catch (err) {
+      setError("Invalid usename or password. Please try again.");
+      console.error("Login Error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,7 +50,6 @@ export default function LoginForm() {
                 <stop offset="100%" stopColor="#9CA3AF" />
               </linearGradient>
             </defs>
-
             <text
               x="100"
               y="28"
@@ -48,7 +62,6 @@ export default function LoginForm() {
             >
               OCULUS
             </text>
-
             <text
               x="100"
               y="45"
@@ -66,14 +79,18 @@ export default function LoginForm() {
         {/* Form Title */}
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Log In</h2>
 
+        {/* Error Message */}
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+
         {/* Form Fields */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="user name"
+            value={usename}
+            onChange={(e) => setusename(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+            required
           />
           <input
             type="password"
@@ -81,14 +98,16 @@ export default function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+            required
           />
 
-          {/* Login Button with Gradient */}
+          {/* Login Button */}
           <button
             type="submit"
-            className="w-full py-2 text-white font-semibold rounded-md bg-gradient-to-r from-gray-900 via-gray-600 to-gray-400 hover:from-gray-700 hover:via-gray-500 hover:to-gray-300"
+            className="w-full py-2 text-white font-semibold rounded-md bg-gradient-to-r from-gray-900 via-gray-600 to-gray-400 hover:from-gray-700 hover:via-gray-500 hover:to-gray-300 disabled:opacity-50"
+            disabled={loading}
           >
-            Sign In
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 

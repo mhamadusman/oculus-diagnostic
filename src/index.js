@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
+import { AuthProvider } from './Components/Auth/AuthContext/AuthContext';
 import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterProvider } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals'
 import Home from './Components/Home/Home';
@@ -23,22 +24,27 @@ const router = createBrowserRouter(
       <Route path='/signup' element={<SignUpForm />} />
 
       {/* Routes with Layout */}
-      <Route path='/' element={<Layout />}>
-        <Route index element={<Navigate to="/home" />} />
-        <Route path='/home' element={<Home />} />
-        <Route path='/profile' element={<Profile />} />
-        <Route path='/result' element={<Result />} />
-        <Route path='/records' element={<Records />} />
-        <Route path='/upload' element={<FileUpload />} />
-        <Route path="*" element={<Navigate to="/home" />} />
-      </Route>
+      
+        <Route path='/' element={<Layout />}>
+     
+          <Route index element={<Navigate to="/home" />} />
+          <Route path='/home' element={<Home />} />
+          <Route path='/profile' element={<Profile />} />
+          <Route path='/result' element={<Result />} />
+          <Route path='/records' element={<Records />} />
+          <Route path='/upload' element={<FileUpload />} />
+    
+        </Route>
+      
     </>
   )
 );
 
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+     <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>
 );
 

@@ -1,38 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { octImageService } from "../../Services/api"; // Adjust the path to your API service
 
 const Records = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [images, setImages] = useState([]); // Store fetched images
+  const [loading, setLoading] = useState(true); // Track loading state
+  const [error, setError] = useState(null); // Track errors
 
-  const patients = [
-    {
-      id: "PT001",
-      name: "Sarah Johnson",
-      age: 58,
-      diagnosis: "Diabetic Retinopathy",
-      status: "Active",
-      lastVisit: "2023-07-15",
-      eyeStatus: "OD: Stable, OS: Progressive"
-    },
-    {
-      id: "PT002",
-      name: "Michael Chen",
-      age: 65,
-      diagnosis: "AMD (Wet)",
-      status: "Monitoring",
-      lastVisit: "2023-07-12",
-      eyeStatus: "Both Eyes: Stable"
-    },
-    // Add more mock patients
-  ];
+  // Fetch images from the API when the component mounts
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const data = await octImageService.getImages(); // Fetch doctor's images
+        setImages(data); // Assuming data is an array of image objects
+      } catch (err) {
+        setError('Failed to fetch image records.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchImages();
+  }, []);
 
-  // Filter patients based on search term and status filter
-  const filteredPatients = patients.filter(
-    (patient) =>
-      (patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.id.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (statusFilter === "" || patient.status === statusFilter)
+  // Filter images based on search term and status
+  const filteredImages = images.filter(
+    (image) =>
+      (image.custom_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        image.id.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "" || image.status === statusFilter)
   );
 
   const getStatusClass = (status) => {
@@ -46,76 +44,55 @@ const Records = () => {
     }
   };
 
-  // Animation variants
+  // Animation variants (unchanged from your original code)
   const pageVariants = {
     initial: { opacity: 0 },
     animate: { 
       opacity: 1,
-      transition: { 
-        duration: 0.7,
-        ease: "easeInOut"
-      }
+      transition: { duration: 0.7, ease: "easeInOut" }
     },
     exit: { 
       opacity: 0,
-      transition: { 
-        duration: 0.3,
-        ease: "easeOut" 
-      }
+      transition: { duration: 0.3, ease: "easeOut" }
     }
   };
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-        ease: "easeOut",
-        duration: 0.5
-      }
-    }
+    show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1, ease: "easeOut", duration: 0.5 } }
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    show: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1], // Custom cubic bezier for smoother motion
-      }
-    }
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } }
   };
 
   const tableRowVariants = {
     hidden: { opacity: 0, y: 10 },
-    show: (i) => ({ 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        delay: i * 0.05,
-        duration: 0.4,
-        ease: [0.25, 0.1, 0.25, 1]
-      }
-    })
+    show: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } })
   };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.98 },
-    show: (i) => ({ 
-      opacity: 1, 
-      y: 0,
-      scale: 1,
-      transition: {
-        delay: i * 0.08,
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1]
-      }
-    })
+    show: (i) => ({ opacity: 1, y: 0, scale: 1, transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] } })
   };
+
+  // Loading and error states
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p>Loading records...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -139,7 +116,7 @@ const Records = () => {
             variants={itemVariants}
             className="text-3xl font-bold text-gray-900"
           >
-            Patient Records
+            OCT Image Records
           </motion.h1>
           <motion.div 
             variants={itemVariants}
@@ -149,7 +126,7 @@ const Records = () => {
               variants={itemVariants}
               whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.2)" }}
               type="text"
-              placeholder="Search patients..."
+              placeholder="Search images..."
               className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-300"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -179,20 +156,18 @@ const Records = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <motion.tr variants={itemVariants}>
-                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Patient ID</motion.th>
-                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</motion.th>
-                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Age</motion.th>
-                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Diagnosis</motion.th>
-                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Last Visit</motion.th>
+                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Image ID</motion.th>
+                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Custom ID</motion.th>
+                    <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Upload Date</motion.th>
                     <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</motion.th>
                     <motion.th variants={itemVariants} className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</motion.th>
                   </motion.tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   <AnimatePresence>
-                    {filteredPatients.map((patient, i) => (
+                    {filteredImages.map((image, i) => (
                       <motion.tr 
-                        key={patient.id}
+                        key={image.id}
                         custom={i}
                         variants={tableRowVariants}
                         initial="hidden"
@@ -200,18 +175,16 @@ const Records = () => {
                         exit="hidden"
                         whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.4)" }}
                       >
-                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900 font-medium">{patient.id}</motion.td>
-                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{patient.name}</motion.td>
-                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{patient.age}</motion.td>
-                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{patient.diagnosis}</motion.td>
-                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{patient.lastVisit}</motion.td>
+                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900 font-medium">{image.id}</motion.td>
+                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{image.custom_id || 'N/A'}</motion.td>
+                        <motion.td variants={itemVariants} className="px-4 py-3 text-sm text-gray-900">{image.upload_date}</motion.td>
                         <motion.td variants={itemVariants} className="px-4 py-3">
                           <motion.span 
                             variants={itemVariants}
                             whileHover={{ y: -2 }}
-                            className={`px-3 py-1 text-sm rounded-full ${getStatusClass(patient.status)}`}
+                            className={`px-3 py-1 text-sm rounded-full ${getStatusClass(image.status)}`}
                           >
-                            {patient.status}
+                            {image.status || 'Unknown'}
                           </motion.span>
                         </motion.td>
                         <motion.td variants={itemVariants} className="px-4 py-3">
@@ -236,9 +209,9 @@ const Records = () => {
         {/* Card view for small screens */}
         <AnimatePresence>
           <motion.div variants={containerVariants} className="md:hidden space-y-4">
-            {filteredPatients.map((patient, i) => (
+            {filteredImages.map((image, i) => (
               <motion.div 
-                key={patient.id} 
+                key={image.id} 
                 custom={i}
                 variants={cardVariants}
                 initial="hidden"
@@ -252,29 +225,25 @@ const Records = () => {
                     variants={itemVariants}
                     className="text-sm font-medium text-gray-900"
                   >
-                    {patient.id}
+                    {image.id}
                   </motion.span>
                   <motion.span 
                     variants={itemVariants}
                     whileHover={{ y: -2 }}
-                    className={`px-3 py-1 text-xs rounded-full ${getStatusClass(patient.status)}`}
+                    className={`px-3 py-1 text-xs rounded-full ${getStatusClass(image.status)}`}
                   >
-                    {patient.status}
+                    {image.status || 'Unknown'}
                   </motion.span>
                 </div>
                 <motion.h3 
                   variants={itemVariants}
                   className="text-lg font-semibold text-gray-900 mb-1"
                 >
-                  {patient.name}
+                  {image.custom_id || 'N/A'}
                 </motion.h3>
                 <div className="grid grid-cols-2 gap-y-2 text-sm mb-3">
-                  <motion.div variants={itemVariants} className="text-gray-500">Age:</motion.div>
-                  <motion.div variants={itemVariants} className="text-gray-900">{patient.age}</motion.div>
-                  <motion.div variants={itemVariants} className="text-gray-500">Diagnosis:</motion.div>
-                  <motion.div variants={itemVariants} className="text-gray-900">{patient.diagnosis}</motion.div>
-                  <motion.div variants={itemVariants} className="text-gray-500">Last Visit:</motion.div>
-                  <motion.div variants={itemVariants} className="text-gray-900">{patient.lastVisit}</motion.div>
+                  <motion.div variants={itemVariants} className="text-gray-500">Upload Date:</motion.div>
+                  <motion.div variants={itemVariants} className="text-gray-900">{image.upload_date}</motion.div>
                 </div>
                 <motion.button 
                   variants={itemVariants}
@@ -290,7 +259,7 @@ const Records = () => {
         </AnimatePresence>
         
         <AnimatePresence>
-          {filteredPatients.length === 0 && (
+          {filteredImages.length === 0 && (
             <motion.div 
               variants={itemVariants}
               initial={{ opacity: 0, y: 20 }}
@@ -302,7 +271,7 @@ const Records = () => {
                 variants={itemVariants}
                 className="text-gray-500"
               >
-                No patients found matching your criteria.
+                No images found matching your criteria.
               </motion.p>
             </motion.div>
           )}

@@ -1,23 +1,167 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Pencil as PencilIcon, Camera as CameraIcon } from "lucide-react";
+import { useAuth } from '../Auth/AuthContext/AuthContext';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [doctor, setDoctor] = useState({
-    name: "Dr. Emily Carter",
-    position: "Senior Ophthalmologist",
-    email: "emily.carter@oculus.com",
-    phone: "+1 (555) 123-4567",
-    hospital: "City Eye Center",
-    license: "MED123456",
-    photo: ""
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState({
+    name: "",
+    position: "",
+    email: "",
+    phone: "",
+    hospital: "",
+    license: "",
+    photo: "",
+    specialty : ""
   });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsEditing(false);
-    // Add profile update logic here
+  
+  const { currentUser, updateProfile, refreshUserData } = useAuth();
+  
+  // Immediately sync state with currentUser on component mount and when currentUser changes
+  useEffect(() => {
+    console.log("Current user in useEffect:", currentUser);
+    
+    // Set loading to true only on first render
+    if (loading) {
+      loadUserData();
+    }
+  }, [currentUser]); // Only depend on currentUser changes
+  
+  const loadUserData = async () => {
+    try {
+      // Try to use currentUser first if available
+      if (currentUser && Object.keys(currentUser).length > 0) {
+        console.log("Using existing currentUser data:", currentUser);
+        updateProfileFromUser(currentUser);
+        setLoading(false);
+      } else {
+        // Otherwise, fetch fresh data
+        console.log("Fetching fresh user data...");
+        const userData = await refreshUserData();
+        console.log("Fresh user data received:", userData);
+        if (userData) {
+          updateProfileFromUser(userData);
+        }
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      setLoading(false);
+    }
   };
+  
+  // Helper function to update profile state from user object
+  const updateProfileFromUser = (user) => {
+    console.log("Updating profile from user:", user);
+    if (!user) return;
+    
+    // Get the photo URL and prepend base URL if it's a relative path
+    let photoUrl = user.doctor?.profile_picture || user.profile_picture || "";
+    
+    // Check if the photo URL is a relative path starting with "/"
+    if (photoUrl && photoUrl.startsWith("/")) {
+      // Replace this with your actual API base URL
+      const baseUrl = "http://localhost:8000/api"; // or process.env.REACT_APP_API_URL
+      photoUrl = `${baseUrl}${photoUrl}`;
+    }
+    
+    const updatedProfile = {
+      name: `${user.user.first_name || ""} ${user.user.last_name || ""}`.trim() || "",
+      position: user.doctor?.role || user.role || "",
+      email: user.user.email || "",
+      phone: user.user.phone || "",
+      hospital: user.doctor?.hospital || user.hospital || "",
+      license: user.doctor?.license_number || user.license_number || "",
+      speciality: user.doctor?.specialty || user.specialty || "",
+      photo: photoUrl
+    };
+    
+    console.log("Setting profile data to:", updatedProfile);
+    setProfileData(updatedProfile);
+  };
+  
+  // Handle profile picture upload
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+  if (file) {
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileData(prev => ({ ...prev, photo: reader.result }));
+    };
+    reader.readAsDataURL(file);
+    
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      // Change this line - remove the nested structure
+      formData.append('profile_picture', file);
+      
+      await updateProfile(formData);
+      await loadUserData(); // Reload user data after update
+    } catch (error) {
+      console.error("Failed to upload profile picture:", error);
+      alert("Failed to upload profile picture. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Parse full name into first_name and last_name
+      const nameParts = profileData.name.trim().split(' ');
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+      
+      const updateData = {
+        first_name,
+        last_name,
+        email: profileData.email,
+        phone: profileData.phone,
+        doctor: {
+          hospital: profileData.hospital || '',
+          role: profileData.position || '',
+          license_number: profileData.license || ''
+          
+        }
+      };
+      
+      console.log("Updating profile with:", updateData);
+      const updatedUserData = await updateProfile(updateData);
+      // No need to call loadUserData again since we have the updated data
+      
+      // Update the profile data directly with the response
+      if (updatedUserData) {
+        updateProfileFromUser(updatedUserData);
+      }
+      
+      setIsEditing(false);
+      alert("Profile updated successfully!");
+      
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Debug output
+  useEffect(() => {
+    console.log("Profile data updated:", profileData);
+  }, [profileData]);
+  
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">
+      <p>Loading profile...</p>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 lg:mt-14 mt-0">
@@ -37,8 +181,8 @@ const Profile = () => {
             <div className="flex flex-col items-center mb-6 sm:mb-8">
               <div className="relative group">
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {doctor.photo ? (
-                    <img src={doctor.photo} alt="Profile" className="w-full h-full object-cover" />
+                  {profileData.photo ? (
+                    <img src={profileData.photo} alt="Profile not uploaded" className="w-full h-full object-cover" />
                   ) : (
                     <div className="flex items-center justify-center w-full h-full">
                       <span className="text-3xl sm:text-4xl text-gray-400">DR</span>
@@ -51,16 +195,16 @@ const Profile = () => {
                     <input 
                       type="file" 
                       className="hidden" 
-                      onChange={(e) => {/* Handle photo upload */}}
+                      onChange={handlePhotoUpload}
                       accept="image/*"
                     />
                   </label>
                 )}
               </div>
 
-              <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-gray-900 text-center">{doctor.name}</h2>
-              <p className="text-gray-600 text-center">{doctor.position}</p>
-              <p className="text-sm text-gray-500 mt-1 text-center">{doctor.hospital}</p>
+              <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-gray-900 text-center">{profileData.name || "Doctor"}</h2>
+              <p className="text-gray-600 text-center">{profileData.position || "Position"}</p>
+              <p className="text-sm text-gray-500 mt-1 text-center">{profileData.hospital || "Hospital"}</p>
             </div>
 
             {/* Form Section */}
@@ -72,8 +216,8 @@ const Profile = () => {
                   </label>
                   <input
                     type="text"
-                    value={doctor.name}
-                    onChange={(e) => setDoctor({...doctor, name: e.target.value})}
+                    value={profileData.name}
+                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />
@@ -85,8 +229,8 @@ const Profile = () => {
                   </label>
                   <input
                     type="text"
-                    value={doctor.position}
-                    onChange={(e) => setDoctor({...doctor, position: e.target.value})}
+                    value={profileData.position}
+                    onChange={(e) => setProfileData({...profileData, position: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />
@@ -98,8 +242,8 @@ const Profile = () => {
                   </label>
                   <input
                     type="email"
-                    value={doctor.email}
-                    onChange={(e) => setDoctor({...doctor, email: e.target.value})}
+                    value={profileData.email}
+                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />
@@ -111,8 +255,8 @@ const Profile = () => {
                   </label>
                   <input
                     type="tel"
-                    value={doctor.phone}
-                    onChange={(e) => setDoctor({...doctor, phone: e.target.value})}
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />
@@ -124,8 +268,8 @@ const Profile = () => {
                   </label>
                   <input
                     type="text"
-                    value={doctor.hospital}
-                    onChange={(e) => setDoctor({...doctor, hospital: e.target.value})}
+                    value={profileData.hospital}
+                    onChange={(e) => setProfileData({...profileData, hospital: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />
@@ -137,8 +281,20 @@ const Profile = () => {
                   </label>
                   <input
                     type="text"
-                    value={doctor.license}
-                    onChange={(e) => setDoctor({...doctor, license: e.target.value})}
+                    value={profileData.license}
+                    onChange={(e) => setProfileData({...profileData, license: e.target.value})}
+                    disabled={!isEditing}
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Speciality
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.specialty}
+                    onChange={(e) => setProfileData({...profileData, speciality: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />
@@ -150,8 +306,9 @@ const Profile = () => {
                   <button
                     type="submit"
                     className="w-full sm:w-auto bg-gradient-to-r from-gray-900 to-gray-400 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:opacity-90"
+                    disabled={loading}
                   >
-                    Save Changes
+                    {loading ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               )}
@@ -164,19 +321,19 @@ const Profile = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div className="border-b sm:border-b-0 pb-2 sm:pb-0">
                 <p className="text-gray-600">Medical License</p>
-                <p className="text-gray-900 font-medium">{doctor.license}</p>
+                <p className="text-gray-900 font-medium">{profileData.license || "Not provided"}</p>
               </div>
               <div className="border-b sm:border-b-0 pb-2 sm:pb-0">
                 <p className="text-gray-600">Contact Email</p>
-                <p className="text-gray-900 font-medium">{doctor.email}</p>
+                <p className="text-gray-900 font-medium">{profileData.email || "Not provided"}</p>
               </div>
               <div>
                 <p className="text-gray-600">Contact Phone</p>
-                <p className="text-gray-900 font-medium">{doctor.phone}</p>
+                <p className="text-gray-900 font-medium">{profileData.phone || "Not provided"}</p>
               </div>
               <div>
                 <p className="text-gray-600">Hospital</p>
-                <p className="text-gray-900 font-medium">{doctor.hospital}</p>
+                <p className="text-gray-900 font-medium">{profileData.hospital || "Not provided"}</p>
               </div>
             </div>
           </div>
