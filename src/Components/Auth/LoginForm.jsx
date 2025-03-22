@@ -18,7 +18,7 @@ export default function LoginForm() {
 
     try {
       await login({ username: usename, password: password });
-      navigate("/profile"); // Redirect to dashboard after login
+      navigate("/home"); // Redirect to dashboard after login
     } catch (err) {
       setError("Invalid usename or password. Please try again.");
       console.error("Login Error:", err);

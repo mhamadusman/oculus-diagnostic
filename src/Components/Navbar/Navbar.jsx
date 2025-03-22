@@ -9,19 +9,36 @@ const Navbar = () => {
   const { currentUser, logout } = useAuth();
 
   useEffect(() => {
+    // Threshold for significant scroll (in pixels)
+    const scrollThreshold = 300;
+    let lastKnownScrollY = 0;
+    let ticking = false;
+  
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > lastScrollY.current) {
-        setVisible(false);
-      } else {
-        setVisible(true);
+      lastKnownScrollY = window.scrollY;
+      
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Only hide navbar if user has scrolled down significantly
+          if (lastKnownScrollY > lastScrollY.current + scrollThreshold) {
+            setVisible(false);
+            lastScrollY.current = lastKnownScrollY;
+          } 
+          // Only show navbar if user has scrolled up significantly
+          else if (lastScrollY.current > lastKnownScrollY + scrollThreshold) {
+            setVisible(true);
+            lastScrollY.current = lastKnownScrollY;
+          }
+  
+          // Set scrolled state for styling purposes (e.g., background color change)
+          setScrolled(lastKnownScrollY > 50);
+          
+          ticking = false;
+        });
       }
-
-      setScrolled(currentScrollY > 50);
-      lastScrollY.current = currentScrollY;
+      ticking = true;
     };
-
+  
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);

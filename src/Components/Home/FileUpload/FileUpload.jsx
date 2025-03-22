@@ -1,15 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate , Link } from 'react-router-dom';
 import { octImageService } from '../../../Services/api'; // Adjust the path to your API service
+import { analysisResultService } from '../../../Services/api'; // Adjust the path to your API service
+
 
 const FileUpload = () => {
   const [loading, setLoading] = useState(false); // Track loading state
   const [error, setError] = useState(null); // Track errors
   const [previewUrl, setPreviewUrl] = useState(null); // Image preview
   const [uploadComplete, setUploadComplete] = useState(false); // Track upload completion
+  const [analysis , setAnalysis] = useState(null)
   const inputRef = useRef(null);
+  const [imageId , setImageId] = useState(null);
   const navigate = useNavigate();
 
   // Handle file selection and generate preview
@@ -21,6 +25,19 @@ const FileUpload = () => {
     reader.readAsDataURL(file);
   };
 
+  const seeResult = () => {
+    const results = analysisResultService.getAnalysisResults();
+    
+    if (results.length > 0) {
+        // Assuming each result has a timestamp or ID for sorting
+        const latestResult = results.reduce((latest, current) => 
+            new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest
+        );
+
+        setAnalysis(latestResult);
+    }
+};
+
   // Handle the actual upload to the API
   const handleUpload = async () => {
     if (!inputRef.current.files[0]) return; // Ensure a file is selected
@@ -30,6 +47,12 @@ const FileUpload = () => {
       const file = inputRef.current.files[0];
       const response = await octImageService.uploadImage(file); // Call API to upload image
       console.log('Image uploaded:', response);
+
+      if(response && response.id) {
+        console.log('Image ID:', response.id); // Extract and log the image ID
+     }
+     setImageId(response.id)
+
       setUploadComplete(true); // Mark upload as complete
     } catch (err) {
       setError('Failed to upload image. Please try again.');
@@ -127,12 +150,12 @@ const FileUpload = () => {
 
         {/* View results button after upload completes */}
         {uploadComplete && (
-          <button
-            onClick={() => navigate('/result')}
-            className="mt-6 w-full bg-gradient-to-r from-gray-900 to-gray-400 text-white py-4 rounded-lg hover:from-gray-800 hover:to-gray-300 transition-all font-medium text-lg"
-          >
-            View Analysis Results
-          </button>
+          <Link
+          to={`/records/${imageId}}`}
+          className="bg-gradient-to-r from-gray-900 to-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all duration-300"
+        >
+          View Details
+        </Link>
         )}
       </motion.div>
     </div>

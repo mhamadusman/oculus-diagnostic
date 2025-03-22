@@ -1,11 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Download, Eye, AlertCircle, CheckCircle, BarChart2 } from 'lucide-react';
+import { FileText, Download, Eye, AlertCircle, CheckCircle, BarChart2, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { analysisResultService } from '../../Services/api';
 
-const ResultPage = () => {
+const Result = () => {
   const [showReport, setShowReport] = useState(false);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const { id } = useParams(); // Get the OCT image ID from URL params
+  const navigate = useNavigate();
 
-  // Enhanced smooth animation variants
+  // Fetch analysis result data
+  useEffect(() => {
+    const fetchResult = async () => {
+      try {
+        setLoading(true);
+        // Make sure id exists before making the API call
+        if (!id) {
+          setError('No image ID provided. Please go back and upload an image.');
+          setLoading(false);
+          return;
+        }
+        
+        const response = await analysisResultService.getAnalysisForImage(id);
+        setResult(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load analysis results. Please try again.');
+        console.error('Error fetching analysis results:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResult();
+  }, [id]);
+
+  // Animation variants
   const pageVariants = {
     initial: { opacity: 0 },
     animate: { 
@@ -60,6 +94,61 @@ const ResultPage = () => {
     }
   };
 
+  // Handle back navigation
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  // If loading, show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-700 font-medium">Loading analysis results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If error, show error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Results</h2>
+          <p className="text-gray-700 mb-4">{error}</p>
+          <button 
+            onClick={handleBack} 
+            className="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If no result found
+  if (!result) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+          <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">No Result Found</h2>
+          <p className="text-gray-700 mb-4">We couldn't find any analysis results for this image (ID: {id}).</p>
+          <button 
+            onClick={handleBack} 
+            className="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial="initial"
@@ -81,6 +170,16 @@ const ResultPage = () => {
         variants={containerVariants}
         className="relative z-10 min-h-screen container mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8 font-sans"
       >
+        {/* Back button */}
+        <motion.button
+          variants={itemVariants}
+          onClick={handleBack}
+          className="mb-6 flex items-center text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          <span>Back to images</span>
+        </motion.button>
+        
         {/* Header Section */}
         <motion.div 
           variants={itemVariants}
@@ -101,7 +200,7 @@ const ResultPage = () => {
               variants={textVariants}
               className="text-gray-800 font-medium text-lg"
             >
-              Condition Detected: Pneumonia
+              Condition Detected: {result.classification}
             </motion.p>
           </motion.div>
         </motion.div>
@@ -111,12 +210,12 @@ const ResultPage = () => {
           {/* Metrics Row */}
           <motion.section 
             variants={itemVariants}
-            className="grid grid-cols-3 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
           >
             {[
-              { icon: BarChart2, title: "Accuracy", value: "96.3%" },
-              { icon: CheckCircle, title: "Precision", value: "94.7%" },
-              { icon: FileText, title: "Prediction", value: "98.5%" }
+              { icon: BarChart2, title: "Image ID", value: result.oct_image?.custom_id || id || "N/A" },
+              { icon: FileText, title: "Classification", value: result.classification },
+              { icon: CheckCircle, title: "Analysis Date", value: new Date(result.analysis_date).toLocaleDateString() }
             ].map((metric, index) => (
               <motion.div 
                 key={index}
@@ -125,7 +224,7 @@ const ResultPage = () => {
                 className="bg-white rounded-md shadow-sm p-5 text-center transition-all"
               >
                 <motion.div className="flex justify-center mb-2">
-                  <metric.icon className="text-green-600 w-6 h-6" />
+                  <metric.icon className="text-indigo-600 w-6 h-6" />
                 </motion.div>
                 <motion.h3 variants={textVariants} className="text-gray-500 rounded-md text-sm font-medium uppercase tracking-wider">
                   {metric.title}
@@ -137,7 +236,7 @@ const ResultPage = () => {
             ))}
           </motion.section>
 
-          {/* Prediction Section */}
+          {/* Original Image and Findings */}
           <motion.section 
             variants={itemVariants}
             className="bg-white rounded-md shadow-sm p-6 space-y-5"
@@ -149,7 +248,7 @@ const ResultPage = () => {
               <span className="bg-indigo-100 p-2 rounded-md mr-3">
                 <Eye className="text-indigo-600 w-5 h-5" />
               </span>
-              Model Prediction
+              OCT Image Analysis
             </motion.h2>
             
             <div className="grid md:grid-cols-2 gap-6">
@@ -163,15 +262,15 @@ const ResultPage = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    src="./images/cam.png"
-                    alt="Chest X-ray image" 
+                    src={result.oct_image?.image || "/api/placeholder/400/320"}
+                    alt="OCT image" 
                     className="rounded-lg w-full h-full object-cover border"
                   />
                   <motion.div 
                     variants={itemVariants}
                     className="absolute top-3 left-3 bg-white/80 px-3 py-1 rounded-full text-xs font-medium text-gray-800 shadow-sm"
                   >
-                    Original X-ray
+                    Original OCT Image
                   </motion.div>
                 </div>
               </motion.div>
@@ -187,149 +286,111 @@ const ResultPage = () => {
                   >
                     Findings
                   </motion.h3>
-                  <motion.p 
+                  <motion.div 
                     variants={textVariants}
                     className="text-gray-700 leading-relaxed"
                   >
-                    The analysis reveals opacity detected in the lower right lobe with moderate infiltration present. No pleural effusion is observed. The patterns are consistent with bacterial pneumonia, characterized by alveolar infiltrates and air bronchograms. The right lower lobe shows increased opacity with patchy consolidation, which is a classic presentation in community-acquired pneumonia cases. The hilar structures appear normal, and no significant lymphadenopathy is noted. The cardiac silhouette is within normal limits, indicating no cardiac involvement at this stage.
-                  </motion.p>
-                  <motion.p 
-                    variants={textVariants}
-                    className="text-gray-700 leading-relaxed mt-3"
-                  >
-                    The absence of pleural effusion suggests that the infection has not progressed to involve the pleural space, which is generally a favorable prognostic sign. The parenchymal changes are moderate in severity, affecting approximately 20-30% of the right lung field. The left lung appears unaffected, with normal aeration and vascular markings. These findings, combined with the clinical presentation, strongly support the diagnosis of lobar pneumonia, likely bacterial in origin.
-                  </motion.p>
-                </div>
-                
-                <motion.button 
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-gray-950 to-gray-400 text-white rounded-lg px-4 py-3 flex items-center justify-center space-x-2 hover:from-gray-800 hover:to-gray-300 transition-all duration-200 shadow-sm"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>View Analysis Details</span>
-                </motion.button>
-              </motion.div>
-            </div>
-          </motion.section>
-
-          {/* Grad-CAM Visualization */}
-          <motion.section 
-            variants={itemVariants}
-            className="bg-white rounded-md shadow-sm p-6 space-y-5"
-          >
-            <motion.h2 
-              variants={textVariants}
-              className="text-2xl font-semibold font-poppins text-gray-800 flex items-center"
-            >
-              <span className="bg-indigo-100 p-2 rounded-lg mr-3">
-                <BarChart2 className="text-indigo-600 w-5 h-5" />
-              </span>
-              Grad-CAM Visualization
-            </motion.h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <motion.div 
-                variants={itemVariants}
-                className="md:order-1"
-              >
-                <div className="relative">
-                  <motion.img 
-                    variants={itemVariants}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    src="./images/cam.png"
-                    alt="Heatmap visualization" 
-                    className="rounded-lg w-full h-full object-cover border border-gray-100 shadow-sm"
-                  />
-                  <motion.div 
-                    variants={itemVariants}
-                    className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-800 shadow-sm"
-                  >
-                    Heatmap Overlay
+                    {/* Display findings with paragraph formatting */}
+                    {result.findings.split('\n').map((paragraph, idx) => (
+                      <p key={idx} className={idx > 0 ? "mt-3" : ""}>
+                        {paragraph}
+                      </p>
+                    ))}
                   </motion.div>
                 </div>
-              </motion.div>
-              
-              <motion.div 
-                variants={itemVariants}
-                className="space-y-4 md:order-2"
-              >
-                <div>
-                  <motion.h3 
-                    variants={textVariants}
-                    className="font-semibold text-gray-800 mb-3"
-                  >
-                    Region Analysis
-                  </motion.h3>
-                  <motion.p 
-                    variants={textVariants}
-                    className="text-gray-700 leading-relaxed"
-                  >
-                    The Grad-CAM heatmap visualization highlights the areas of the radiograph that most significantly influenced the model's prediction. The regions of highest activation are concentrated in the right lower lobe, corresponding to the areas of consolidation identified in the clinical findings. The intensity of the red coloration indicates a strong correlation between these regions and the model's diagnostic confidence.
-                  </motion.p>
-                  <motion.p 
-                    variants={textVariants}
-                    className="text-gray-700 leading-relaxed mt-3"
-                  >
-                    Secondary areas of interest are noted along the right cardiac border, where subtle changes in lung parenchyma texture were detected by the algorithm. The model has correctly ignored normal anatomical structures such as the heart border, major vessels, and bony structures that are not relevant to the pneumonia diagnosis. This selective attention demonstrates the model's ability to focus on clinically relevant features while filtering out normal anatomical noise.
-                  </motion.p>
-                  <motion.p 
-                    variants={textVariants}
-                    className="text-gray-700 leading-relaxed mt-3"
-                  >
-                    The left lung shows minimal activation, reflecting its normal appearance in the radiograph. This asymmetric activation pattern strongly supports the unilateral nature of the pneumonic process, which is accurately captured by the model's attention mechanism. The clear delineation between areas of interest and normal lung tissue suggests high specificity in the model's feature extraction process, contributing to its overall diagnostic accuracy.
-                  </motion.p>
-                </div>
                 
-                <motion.button 
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-gray-950 to-gray-400 text-white rounded-lg px-4 py-3 flex items-center justify-center space-x-2 hover:from-gray-800 hover:to-gray-300 transition-all duration-200 shadow-sm"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download Full Report</span>
-                </motion.button>
+                {result.oct_image?.notes && (
+                  <motion.div variants={itemVariants} className="mt-4">
+                    <motion.h3 
+                      variants={textVariants}
+                      className="font-semibold text-gray-800 mb-2"
+                    >
+                      Additional Notes
+                    </motion.h3>
+                    <motion.p variants={textVariants} className="text-gray-700">
+                      {result.oct_image.notes}
+                    </motion.p>
+                  </motion.div>
+                )}
               </motion.div>
             </div>
           </motion.section>
 
-          {/* Summary Stats */}
-          <motion.section 
-            variants={itemVariants}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-          >
-            {[
-              { title: "Disease Category", value: "Respiratory" },
-              { title: "Severity Level", value: "Moderate" },
-              { title: "Treatment Urgency", value: "High" }
-            ].map((stat, index) => (
-              <motion.div 
-                key={index}
-                variants={itemVariants}
-                whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                className="bg-white rounded-md shadow-sm p-5 text-center transition-all"
+          {/* Analysis Image Visualization */}
+          {result.analysis_image && (
+            <motion.section 
+              variants={itemVariants}
+              className="bg-white rounded-md shadow-sm p-6 space-y-5"
+            >
+              <motion.h2 
+                variants={textVariants}
+                className="text-2xl font-semibold font-poppins text-gray-800 flex items-center"
               >
-                <motion.h3 
-                  variants={textVariants}
-                  className="text-gray-500 text-sm font-medium uppercase tracking-wider"
+                <span className="bg-indigo-100 p-2 rounded-lg mr-3">
+                  <BarChart2 className="text-indigo-600 w-5 h-5" />
+                </span>
+                Analysis Visualization
+              </motion.h2>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <motion.div 
+                  variants={itemVariants}
+                  className="md:order-1"
                 >
-                  {stat.title}
-                </motion.h3>
-                <motion.p 
-                  variants={textVariants}
-                  className="text-lg sm:text-xl font-semibold mt-1 text-gray-700"
+                  <div className="relative">
+                    <motion.img 
+                      variants={itemVariants}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      src={result.analysis_image}
+                      alt="Analysis visualization" 
+                      className="rounded-lg w-full h-full object-cover border border-gray-100 shadow-sm"
+                    />
+                    <motion.div 
+                      variants={itemVariants}
+                      className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-800 shadow-sm"
+                    >
+                      Analysis Overlay
+                    </motion.div>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  variants={itemVariants}
+                  className="space-y-4 md:order-2"
                 >
-                  {stat.value}
-                </motion.p>
-              </motion.div>
-            ))}
-          </motion.section>
+                  <div>
+                    <motion.h3 
+                      variants={textVariants}
+                      className="font-semibold text-gray-800 mb-3"
+                    >
+                      Analysis Details
+                    </motion.h3>
+                    <motion.p 
+                      variants={textVariants}
+                      className="text-gray-700 leading-relaxed"
+                    >
+                      The analysis visualization highlights the regions of interest that influenced the model's prediction. The colored areas indicate the features that were most significant in determining the classification result.
+                    </motion.p>
+                  </div>
+                  
+                  <motion.button 
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => window.open(result.analysis_image, '_blank')}
+                    className="w-full bg-gradient-to-r from-gray-950 to-gray-400 text-white rounded-lg px-4 py-3 flex items-center justify-center space-x-2 hover:from-gray-800 hover:to-gray-300 transition-all duration-200 shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Analysis Image</span>
+                  </motion.button>
+                </motion.div>
+              </div>
+            </motion.section>
+          )}
 
-          {/* Recommended Actions */}
+          {/* Actions Section */}
           <motion.section 
             variants={itemVariants}
             className="bg-white rounded-md shadow-sm p-6"
@@ -341,50 +402,64 @@ const ResultPage = () => {
               <span className="bg-indigo-100 p-2 rounded-lg mr-3">
                 <CheckCircle className="text-indigo-600 w-5 h-5" />
               </span>
-              Recommended Actions
+              Actions
             </motion.h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { 
-                  title: "Consult with Specialist", 
-                  description: "Schedule follow-up with pulmonologist to discuss treatment options.", 
-                  buttonText: "Schedule Appointment" 
-                },
-                { 
-                  title: "Additional Tests", 
-                  description: "Consider additional blood work and sputum culture to determine pathogen.", 
-                  buttonText: "Request Tests" 
-                }
-              ].map((action, index) => (
-                <motion.div 
-                  key={index}
-                  variants={itemVariants}
-                  whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                  className="bg-gray-50 border border-gray-100 rounded-lg p-5 flex flex-col shadow-sm transition-all"
+              <motion.div 
+                variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                className="bg-gray-50 border border-gray-100 rounded-lg p-5 flex flex-col shadow-sm transition-all"
+              >
+                <motion.h3 
+                  variants={textVariants}
+                  className="font-medium text-gray-800 mb-2"
                 >
-                  <motion.h3 
-                    variants={textVariants}
-                    className="font-medium text-gray-800 mb-2"
-                  >
-                    {action.title}
-                  </motion.h3>
-                  <motion.p 
-                    variants={textVariants}
-                    className="text-gray-700 text-sm flex-grow"
-                  >
-                    {action.description}
-                  </motion.p>
-                  <motion.button 
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="mt-4 bg-gradient-to-r from-gray-950 to-gray-400 text-white rounded-lg px-4 py-2 text-sm hover:from-gray-800 hover:to-gray-300 transition-all shadow-sm"
-                  >
-                    {action.buttonText}
-                  </motion.button>
-                </motion.div>
-              ))}
+                  Download Analysis Report
+                </motion.h3>
+                <motion.p 
+                  variants={textVariants}
+                  className="text-gray-700 text-sm flex-grow"
+                >
+                  Get a detailed PDF report with all analysis information and findings.
+                </motion.p>
+                <motion.button 
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="mt-4 bg-gradient-to-r from-gray-950 to-gray-400 text-white rounded-lg px-4 py-2 text-sm hover:from-gray-800 hover:to-gray-300 transition-all shadow-sm"
+                >
+                  Generate Report
+                </motion.button>
+              </motion.div>
+              
+              <motion.div 
+                variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                className="bg-gray-50 border border-gray-100 rounded-lg p-5 flex flex-col shadow-sm transition-all"
+              >
+                <motion.h3 
+                  variants={textVariants}
+                  className="font-medium text-gray-800 mb-2"
+                >
+                  Return to Dashboard
+                </motion.h3>
+                <motion.p 
+                  variants={textVariants}
+                  className="text-gray-700 text-sm flex-grow"
+                >
+                  Go back to your image dashboard to upload or analyze more images.
+                </motion.p>
+                <motion.button 
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleBack}
+                  className="mt-4 bg-gradient-to-r from-gray-950 to-gray-400 text-white rounded-lg px-4 py-2 text-sm hover:from-gray-800 hover:to-gray-300 transition-all shadow-sm"
+                >
+                  Back to Dashboard
+                </motion.button>
+              </motion.div>
             </div>
           </motion.section>
         </div>
@@ -393,4 +468,4 @@ const ResultPage = () => {
   );
 };
 
-export default ResultPage;
+export default Result;

@@ -147,14 +147,27 @@ const reviewService = {
         const response = await api.post('/reviews/', reviewData);
         return response.data;
     },
-    getReviews: async () => {
-        const response = await api.get('/reviews/');
+
+    getReviews: async (analysisId = null) => {
+        const url = analysisId ? `/reviews/?analysis_result=${analysisId}` : '/reviews/';
+        const response = await api.get(url);
         return response.data;
     },
+
     getReviewsForAnalysis: async (analysisId) => {
         const response = await api.get(`/reviews/?analysis_result=${analysisId}`);
         return response.data;
     },
+
+    updateReview: async (reviewId, reviewData) => {
+        const response = await api.patch(`/reviews/${reviewId}/`, reviewData);
+        return response.data;
+    },
+
+    deleteReview: async (reviewId) => {
+        await api.delete(`/reviews/${reviewId}/`);
+    },
+
 };
 
 export { api, authService, octImageService, analysisResultService, reviewService };

@@ -29,7 +29,7 @@ export default function SignUpForm() {
     setLoading(true);
     try {
       await signup({ username, email, password, first_name: firstName, last_name: lastName });
-      navigate("/login");
+      navigate("/home");
     } // SignUpForm.js (handleSubmit catch block)
 catch (err) {
   if (err.response && err.response.data) {

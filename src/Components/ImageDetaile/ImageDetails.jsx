@@ -1,7 +1,9 @@
 // src/components/ImageDetails.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { octImageService } from '../../Services/api';
+import { octImageService } from '../../Services/api'; // Adjust path
+import ReviewSection from '../ReviewSection/ReviewSection';
+
 
 const ImageDetails = () => {
   const { id } = useParams();
@@ -9,6 +11,7 @@ const ImageDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch image details when the component mounts or id changes
   useEffect(() => {
     const fetchImageDetails = async () => {
       try {
@@ -24,24 +27,12 @@ const ImageDetails = () => {
     fetchImageDetails();
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
+  // Render loading, error, or image details
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><p>Loading...</p></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-red-500">{error}</p></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 lg:px-8 lg:mt-24">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 lg:px-8">
       <div className="container mx-auto">
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Image Details</h2>
         <div className="bg-white p-6 rounded-xl shadow-md">
@@ -53,32 +44,20 @@ const ImageDetails = () => {
                 alt="OCT Image"
                 className="w-full h-auto rounded-lg shadow-sm mb-4"
               />
+              <p className="text-sm text-gray-600"><strong>ID:</strong> {image.id}</p>
+              <p className="text-sm text-gray-600"><strong>Custom ID:</strong> {image.custom_id || 'N/A'}</p>
+              <p className="text-sm text-gray-600"><strong>Upload Date:</strong> {image.upload_date}</p>
               <p className="text-sm text-gray-600">
-                <strong>ID:</strong> {image.id}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Custom ID:</strong> {image.custom_id || 'N/A'}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Upload Date:</strong> {image.upload_date}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Doctor:</strong> {image.doctor.user.first_name} {image.doctor.user.last_name}
+                <strong>Doctor:</strong> {image.doctor?.user?.first_name || 'Unknown'} {image.doctor?.user?.last_name || ''}
               </p>
             </div>
-            {/* Right Column: Analysis Result */}
+            {/* Right Column: Analysis Result and Reviews */}
             {image.analysis_result && (
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Analysis Report</h3>
-                <p className="text-sm text-gray-600">
-                  <strong>Classification:</strong> {image.analysis_result.classification}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Findings:</strong> {image.analysis_result.findings}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Analysis Date:</strong> {image.analysis_result.analysis_date}
-                </p>
+                <p className="text-sm text-gray-600"><strong>Classification:</strong> {image.analysis_result.classification || 'N/A'}</p>
+                <p className="text-sm text-gray-600"><strong>Findings:</strong> {image.analysis_result.findings || 'N/A'}</p>
+                <p className="text-sm text-gray-600"><strong>Analysis Date:</strong> {image.analysis_result.analysis_date || 'N/A'}</p>
                 {image.analysis_result.analysis_image && (
                   <img
                     src={image.analysis_result.analysis_image}
@@ -86,6 +65,7 @@ const ImageDetails = () => {
                     className="w-full h-auto rounded-lg shadow-sm mt-4"
                   />
                 )}
+                <ReviewSection analysisResultId={image.analysis_result.id} />
               </div>
             )}
           </div>
