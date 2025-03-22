@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Pencil as PencilIcon, Camera as CameraIcon } from "lucide-react";
 import { useAuth } from '../Auth/AuthContext/AuthContext';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const profileImageRef = useRef(null);
   const [profileData, setProfileData] = useState({
     name: "",
     position: "",
@@ -13,158 +16,187 @@ const Profile = () => {
     hospital: "",
     license: "",
     photo: "",
-    specialty : ""
+    specialty: ""
   });
   
   const { currentUser, updateProfile, refreshUserData } = useAuth();
-  
-  // Immediately sync state with currentUser on component mount and when currentUser changes
-  useEffect(() => {
-    console.log("Current user in useEffect:", currentUser);
+  const baseURL = 'http://localhost:8000/api';
+
+  // Fix image URL construction
+  const getProperImageUrl = (url) => {
+    if (!url) return '';
     
-    // Set loading to true only on first render
-    if (loading) {
-      loadUserData();
+    // Handle relative URLs
+    if (url.startsWith('/')) {
+      return `${baseURL}${url}`;
     }
-  }, [currentUser]); // Only depend on currentUser changes
-  
-  const loadUserData = async () => {
-    try {
-      // Try to use currentUser first if available
-      if (currentUser && Object.keys(currentUser).length > 0) {
-        console.log("Using existing currentUser data in loadUserData api current:", currentUser);
-        updateProfileFromUser(currentUser);
-        setLoading(false);
-      } else {
-        // Otherwise, fetch fresh data
-        console.log("Fetching fresh user data...");
-        const userData = await refreshUserData();
-        console.log("Fresh user data received:", userData);
-        if (userData) {
-          updateProfileFromUser(userData);
-        }
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Error loading user data:", error);
-      setLoading(false);
-    }
+    
+    // Already a full URL
+    return url;
   };
+
+  // Load profile data when component mounts or currentUser changes
+  // Modify your first useEffect to better handle the loading state
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeProfile = async () => {
+      if (!mounted) return;
+
+      const currentUser = await refreshUserData();
+
+      
+      setLoading(true);
+      try {
+        // Try to use current user data first if it exists
+        if (currentUser && Object.keys(currentUser).length > 0) {
+          console.log("Using existing currentUser data:", currentUser);
+          updateProfileFromUser(currentUser);
+          setLoading(false);
+          return;
+        }
+        
+        // Otherwise, fetch fresh data
+        
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
   
-  // Helper function to update profile state from user object
+    initializeProfile();
+  
+    // Cleanup function to prevent updates if component unmounts
+    return () => {
+      mounted = false;
+    };
+  },[]); // Empty dependency array - only run once on mount // Remove currentUser from dependency array
+
+  // Force image reload when the component mounts
+  useEffect(() => {
+    if (profileData.photo && profileImageRef.current) {
+      // Set a random parameter to bust cache
+      profileImageRef.current.src = `${profileData.photo}`;
+      
+      // Explicitly force reload
+      profileImageRef.current.onload = () => {
+        setImageLoaded(true);
+        setImageError(false);
+      };
+      
+      profileImageRef.current.onerror = () => {
+        console.error("Failed to load image:", profileData.photo);
+        setImageError(true);
+        setImageLoaded(false);
+      };
+    }
+  }, [profileData.photo]);
+
   const updateProfileFromUser = (user) => {
-    console.log("Updating profile pic from current user:", user);
     if (!user) return;
     
-    // Get the photo URL and prepend base URL if it's a relative path
-    let photoUrl = user.doctor?.profile_picture || user.profile_picture || "";
+    // Process photo URL properly
+    let photoUrl = user.profile_picture || '';
+    photoUrl = getProperImageUrl(photoUrl);
     
-    // Check if the photo URL is a relative path starting with "/"
-    if (photoUrl && photoUrl.startsWith("/")) {
-      // Replace this with your actual API base URL
-      const baseUrl = "http://localhost:8000/api"; // or process.env.REACT_APP_API_URL
-      photoUrl = `${baseUrl}${photoUrl}`;
-    }
+    // Reset image state
+    setImageLoaded(false);
+    setImageError(false);
     
+    console.log("User data received:", user);
+    console.log("Photo URL processed:", photoUrl);
+  
+    const firstName = user.first_name || user.user?.first_name || "";
+    const lastName = user.last_name || user.user?.last_name || "";
+    const email = user.email || user.user?.email || "";
+  
     const updatedProfile = {
-      name: `${user.user.first_name || ""} ${user.user.last_name || ""}`.trim() || "",
+      name: `${firstName} ${lastName}`.trim() || "Unnamed User",
+      email: email || "No email provided",
+      phone: user.phone || user.user?.phone || "",
       position: user.doctor?.role || user.role || "",
-      email: user.user.email || "",
-      phone: user.user.phone || "",
       hospital: user.doctor?.hospital || user.hospital || "",
       license: user.doctor?.license_number || user.license_number || "",
-      speciality: user.doctor?.specialty || user.specialty || "",
+      specialty: user.doctor?.specialty || user.specialty || "",
       photo: photoUrl
     };
-    
+  
     console.log("Setting profile data to:", updatedProfile);
     setProfileData(updatedProfile);
   };
-  
-  // Handle profile picture upload
+
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
-  if (file) {
-    // Show preview immediately
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfileData(prev => ({ ...prev, photo: reader.result }));
-    };
-    reader.readAsDataURL(file);
-    
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      // Change this line - remove the nested structure
-      formData.append('profile_picture', file);
-      
-      await updateProfile(formData);
-      await loadUserData(); // Reload user data after update
-    } catch (error) {
-      console.error("Failed to upload profile picture:", error);
-      alert("Failed to upload profile picture. Please try again.");
-    } finally {
-      setLoading(false);
+    if (file) {
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        
+        await updateProfile(formData);
+        const updatedUserData = await refreshUserData();
+        if (updatedUserData) {
+          updateProfileFromUser(updatedUserData);
+        }
+        alert("Profile picture updated successfully!");
+      } catch (error) {
+        console.error("Failed to upload profile picture:", error);
+        alert("Failed to upload profile picture. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
-  }
   };
-  
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      // Parse full name into first_name and last_name
-      const nameParts = profileData.name.trim().split(' ');
-      const first_name = nameParts[0] || '';
-      const last_name = nameParts.slice(1).join(' ') || '';
-      
-      const updateData = {
-        first_name,
-        last_name,
-        email: profileData.email,
-        phone: profileData.phone,
-        doctor: {
-          hospital: profileData.hospital || '',
-          role: profileData.position || '',
-          license_number: profileData.license || ''
-          
+        const nameParts = profileData.name.trim().split(' ');
+        const first_name = nameParts[0] || '';
+        const last_name = nameParts.slice(1).join(' ') || '';
+        
+        // Flatten the data structure to match what the backend expects
+        const updateData = {
+            first_name,
+            last_name,
+            email: profileData.email,
+            phone: profileData.phone,
+            // Include doctor fields directly at the top level
+            hospital: profileData.hospital || '',
+            role: profileData.position || '',
+            license_number: profileData.license || '',
+            specialty: profileData.specialty || ''
+        };
+        
+        console.log("Updating profile with:", updateData);
+        const updatedUserData = await updateProfile(updateData);
+        if (updatedUserData) {
+            updateProfileFromUser(updatedUserData);
         }
-      };
-      
-      console.log("Updating profile with:", updateData);
-      const updatedUserData = await updateProfile(updateData);
-      // No need to call loadUserData again since we have the updated data
-      
-      // Update the profile data directly with the response
-      if (updatedUserData) {
-        updateProfileFromUser(updatedUserData);
-      }
-      
-      setIsEditing(false);
-      alert("Profile updated successfully!");
-      
+        setIsEditing(false);
+        alert("Profile updated successfully!");
     } catch (error) {
-      console.error("Failed to update profile:", error);
-      alert("Failed to update profile. Please try again.");
+        console.error("Failed to update profile:", error);
+        alert("Failed to update profile. Please try again.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
-  
-  // Debug output
-  useEffect(() => {
-    console.log("Profile data updated:", profileData);
-  }, [profileData]);
-  
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">
-      <p>Loading profile...</p>
-    </div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Loading profile...</p>
+      </div>
+    );
   }
 
+  // Main render
   return (
     <div className="min-h-screen bg-gray-50 lg:mt-14 mt-0">
       <main className="container mx-auto px-4 py-3 lg:px-8 lg:py-12">
@@ -184,10 +216,39 @@ const Profile = () => {
               <div className="relative group">
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                   {profileData.photo ? (
-                    <img src={profileData.photo} alt="Profile not uploaded" className="w-full h-full object-cover" />
+                    <>
+                      {/* This is the hidden image that we'll use for testing loading */}
+                      <img 
+                        ref={profileImageRef}
+                        src={profileData.photo}
+                        alt=""
+                        className="hidden"
+                      />
+                      
+                      {/* This is the visible image shown to the user */}
+                      {!imageError ? (
+                        <img 
+                          src={profileData.photo} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error("Visible image failed to load:", profileData.photo);
+                            setImageError(true);
+                          }}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-full h-full">
+                          <span className="text-3xl sm:text-4xl text-gray-400">
+                            {profileData.name.split(' ').map(name => name[0]).join('').substring(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="flex items-center justify-center w-full h-full">
-                      <span className="text-3xl sm:text-4xl text-gray-400">DR</span>
+                      <span className="text-3xl sm:text-4xl text-gray-400">
+                        {profileData.name.split(' ').map(name => name[0]).join('').substring(0, 2).toUpperCase()}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -291,12 +352,12 @@ const Profile = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                    Speciality
+                    Specialty
                   </label>
                   <input
                     type="text"
-                    value={profileData.speciality}
-                    onChange={(e) => setProfileData({...profileData, speciality: e.target.value})}
+                    value={profileData.specialty}
+                    onChange={(e) => setProfileData({...profileData, specialty: e.target.value})}
                     disabled={!isEditing}
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-50"
                   />

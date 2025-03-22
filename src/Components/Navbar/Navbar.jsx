@@ -10,7 +10,7 @@ const Navbar = () => {
 
   useEffect(() => {
     // Threshold for significant scroll (in pixels)
-    const scrollThreshold = 300;
+    const scrollThreshold = 200;
     let lastKnownScrollY = 0;
     let ticking = false;
   
@@ -120,9 +120,7 @@ const Navbar = () => {
             <Link to="/records" className="hover:underline hover:text-gray-700">
               Records
             </Link>
-            <Link to="/result" className="hover:underline hover:text-gray-700">
-              Results
-            </Link>
+          
           </div>
 
           {/* Auth Buttons - Conditionally rendered based on auth status */}

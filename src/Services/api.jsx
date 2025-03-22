@@ -96,7 +96,7 @@ const authService = {
                 data = { ...profileData };
             }
 
-            const response = await api.patch('/doctors/update_profile', data, config);
+            const response = await api.patch('/doctors/update_profile/', data, config);
             return response.data;
         } catch (error) {
             console.error('Error updating profile:', error);
