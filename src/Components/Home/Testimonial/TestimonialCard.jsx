@@ -1,35 +1,48 @@
 import React from 'react';
-import StarRating from './StarRating';
+import { FaStar } from 'react-icons/fa';
 
-const TestimonialCard = ({ profileImage, comment, name, position, company, rating }) => {
+const TestimonialCard = ({ profileImage, comment, name, position, company, rating, isMobile = false }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-8 flex flex-col items-center h-full">
-      <div className="relative mb-4">
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200">
-          {/* Use placeholder image if no profile image is available */}
-          <img 
-            src={profileImage || "/api/placeholder/96/96"} 
-            alt={name} 
-            className="w-full h-full object-cover"
-          />
+    <div className={`bg-black mb-10 border-t-0 border-b-0 border border-gray-600  rounded-md overflow-hidden flex flex-col h-full nsition-all duration-300 hover:border-gray-700 ${isMobile ? 'mx-auto max-w-md' : ''}`}>
+      <div className="p-6 flex flex-col h-full">
+        {/* User info at the top */}
+        <div className="flex items-center mb-4">
+          {profileImage ? (
+            <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+              <img 
+                src={profileImage} 
+                alt={`${name}'s profile`} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mr-4">
+              <span className="text-gray-200">
+                {name ? name.charAt(0) : 'U'}
+              </span>
+            </div>
+          )}
+          
+          <div>
+            <h3 className="font-grotesk  text-gray-200">{name || "Ralph Edwards"}</h3>
+            <p className="text-gray-400 font-inter text-sm">{position || "CEO"} @ {company || "Matrixon"}</p>
+          </div>
         </div>
-        <div className="absolute -right-2 -top-2 bg-blue-500 rounded-full p-2 text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z" />
-          </svg>
+        
+        {/* Rating stars */}
+        <div className="mb-4 text-yellow-500 flex">
+          {[...Array(5)].map((_, i) => (
+            <FaStar
+              key={i}
+              className={i < rating ? "text-yellow-500" : "text-gray-600"}
+            />
+          ))}
         </div>
-      </div>
-
-      <div className="text-center mb-3 w-full flex flex-col items-center">
-        <h3 className="font-bold text-lg">{name}</h3>
-        <p className="text-gray-600 text-sm">{position}</p>
-        <p className="text-gray-600 text-sm">{company}</p>
-
-        <StarRating rating={rating} />
-      </div>
-      
-      <div className="max-h-40 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-        <p className="text-center text-gray-800">"{comment}"</p>
+        
+        {/* Testimonial content with overflow handling */}
+        <div className="mb-4 flex-grow overflow-auto max-h-32 custom-scrollbar">
+          <p className="font-sans text-md text-gray200">{comment}</p>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { octImageService } from '../../Services/api'; // Adjust path
-import ReviewSection from '../ReviewSection/ReviewSection';
+import ReviewSection from '../../Components/ReviewSection/ReviewSection';
 
 
 const ImageDetails = () => {

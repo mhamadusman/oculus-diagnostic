@@ -12,9 +12,13 @@ module.exports = {
         darkGray: '#1F2937',     // Dark text gray
       },
       fontFamily: {
-        sans: ['Roboto', 'sans-serif'],
-        poppin: ['Poppins', 'sans-serif'],
-        jaro: ['Jaro', 'cursive'], // Add Jaro font
+        grotesk: ["Space Grotesk", "sans-serif"],
+        inter: ["Inter", "sans-serif"],
+        worksans: ["Work Sans", "sans-serif"],
+        dmsans: ["DM Sans", "sans-serif"],
+        plex: ["IBM Plex Sans", "sans-serif"],
+        source: ["Source Sans Pro", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

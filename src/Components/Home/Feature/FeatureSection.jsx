@@ -1,64 +1,63 @@
 import React from "react";
 import FeatureCard from "./FeatureCard";
-import { BiUserCheck } from "react-icons/bi";
-import { AiOutlineCheckCircle, AiOutlineThunderbolt } from "react-icons/ai";
 import { Link } from "react-router-dom";
-import { FaArrowUp } from "react-icons/fa";
+import { CheckCircle, Zap, User } from "lucide-react";
 
 export default function FeatureSection() {
   const features = [
     {
-      icon: () => <AiOutlineCheckCircle className="text-white text-3xl" />,
+      icon: () => <CheckCircle className="text-white" size={24} />,
       title: "High Accuracy",
       subtitle: "Precision",
       description:
         "Our AI diagnostic tools provide unmatched accuracy, ensuring reliable results for medical professionals.",
+      linkText: "Review"
+      
     },
     {
-      icon: () => <AiOutlineThunderbolt className="text-white text-3xl" />,
+      icon: () => <Zap className="text-white" size={24} />,
       title: "Rapid Processing",
       subtitle: "Speed",
       description:
         "Experience lightning-fast analysis, allowing for quicker decision-making and patient care.",
+      linkText: "Review"
+
     },
     {
-      icon: () => <BiUserCheck className="text-white text-3xl" />,
+      icon: () => <User className="text-white" size={24} />,
       title: "User-Friendly Interface",
       subtitle: "Usability",
       description:
         "Intuitive design tailored for medical professionals, making navigation and use effortless.",
+      linkText: "Review"
+
     },
   ];
 
   return (
-    <section className="py-20 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-softGray to-white">
+    <section className=" pt-14 lg:mb-16 px-4 md:px-6 lg:px-8 bg-black min-h-screen">
+       <style jsx global>{`
+          @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+        `}</style>
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-darkGray mb-4">
+        <div className="text-center mb-8">
+          <h2 className=" sm:text-6xl font-grotesk font-bold text-white mb-4 lg:mt-20">
             Our Features
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+          <p className=" font-inter sm:text-xl text-gray-400 max-w-2xl mx-auto lg:mb-28">
             Empowering healthcare professionals with advanced diagnostic tools
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <FeatureCard key={index} {...feature} />
           ))}
         </div>
-        <div className="mt-12 flex  justify-center  px-4">
-          <Link
-            to="/login"
-            className=" bg-gradient-to-r from-gray-950 via-gray-800 to-gray-600 
-               hover:from-gray-800 hover:via-gray-700 hover:to-gray-500
-               transition-colors duration-300 text-white rounded-lg 
-               px-6 py-3 text-base md:text-lg shadow-lg hover:shadow-xl 
-               font-serif flex items-center justify-center gap-2"
-          >
-            Explore More Features
-          </Link>
-        </div>
+        
+   
       </div>
     </section>
   );

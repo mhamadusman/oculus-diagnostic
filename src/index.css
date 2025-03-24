@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
 
 
 @tailwind base;
@@ -31,23 +39,35 @@
   }
 
   body {
-    @apply bg-softGray text-darkGray; /* Use Tailwind colors */
+    @apply bg-softGray text-darkGray bg-black; /* Use Tailwind colors */
+
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  /* Add this to your CSS file */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #333 #0a0a0a;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #333;
+  border-radius: 6px;
+}
+
+/* Ensure the animations work properly in different browsers */
+@media (prefers-reduced-motion: no-preference) {
+  .flex[style*="animation"] {
+    will-change: transform;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-  }
+}
 }
 
 @layer components {
@@ -56,7 +76,7 @@
   }
 
   .custome-link {
-    @apply font-poppin inline-block px-5 py-1 hover:bg-slate-200 hover:text-black hover:rounded-full transition-all duration-300 ease-in-out;
+    @apply  inline-block px-5 py-1 hover:bg-slate-200 hover:text-black hover:rounded-full transition-all duration-300 ease-in-out;
   }
 
   .active-class {

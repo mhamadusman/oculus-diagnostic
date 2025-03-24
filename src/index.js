@@ -27,18 +27,17 @@ const router = createBrowserRouter(
 
       {/* Routes with Layout */}
       
-        <Route path='/' element={<Layout />}>
-     
-          <Route index element={<Navigate to="/home" />} />
-          <Route path='/home' element={<Home />} />
-          <Route path='/profile' element={<Profile />} />
-          <Route path="/result/:id" element={<Result />} />
-          <Route path='/records' element={<Records />} />
-          <Route path='/allreviews' element={<AllReviews />} />
-          <Route path='/records/:id' element={<ImageDetails />} />
-          <Route path='/upload' element={<FileUpload />} />
-    
-        </Route>
+      <Route path='/' element={<Layout />}>
+        <Route index element={<Home />} />  {/* This ensures Home appears first */}
+        <Route path='/home' element={<Home />} />
+        <Route path='/profile' element={<Profile />} />
+        <Route path="/result/:id" element={<Result />} />
+        <Route path='/records' element={<Records />} />
+        <Route path='/allreviews' element={<AllReviews />} />
+        <Route path='/records/:id' element={<ImageDetails />} />
+        <Route path='/upload' element={<FileUpload />} />
+      </Route>
+
       
     </>
   )
