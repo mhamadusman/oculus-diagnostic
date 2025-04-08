@@ -41,32 +41,34 @@ const AllReviews = () => {
 
   if (loading) {
     return (
-      <div className="bg-gray-100 py-12 px-4 sm:px-6 lg:px-8 text-center">
-        <p>Loading reviews...</p>
+      <div className="min-h-screen bg-black flex  items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-center">
+        <p className="font-inter text-gray-300 animate-pulse text-sm sm:text-base">Loading reviews...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-100 py-12 px-4 sm:px-6 lg:px-8 text-center">
-        <p className="text-red-500">{error}</p>
+      <div className="min-h-screen bg-black flex  items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-center">
+        <p className="text-red-400 font-inter text-sm sm:text-base">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-black py-10 px-3 lg:mt-20 sm:px-6 lg:px-8 text-white">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900">All Reviews</h2>
-          <p className="mt-4 text-xl text-gray-600">See what our users have to say</p>
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold font-grotesk text-white">All Reviews</h2>
+          <p className="mt-3 sm:mt-4 text-base sm:text-xl text-gray-300 font-inter">See what our users have to say</p>
         </div>
         
         {reviews.length === 0 ? (
-          <p className="text-center text-gray-500">No reviews available yet.</p>
+          <div className="text-center py-16">
+            <p className="text-gray-400 font-inter text-sm sm:text-base">No reviews available yet.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {reviews.map((review, index) => (
               <TestimonialCard
                 key={review.id || index}

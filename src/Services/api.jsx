@@ -111,35 +111,73 @@ const authService = {
 // New OCT Image service
 const octImageService = {
     uploadImage: async (imageFile, customId) => {
-        const formData = new FormData();
-        formData.append('image_file', imageFile);
-        if (customId) formData.append('custom_id', customId);
-        const response = await api.post('/oct-images/', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        return response.data;
+        try {
+            const formData = new FormData();
+            formData.append('image_file', imageFile);
+            if (customId) formData.append('custom_id', customId);
+            
+            const response = await api.post('/oct-images/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            return {
+                success: false,
+                error: error.response?.data || 'Upload failed. Please try again.'
+            };
+        }
     },
+    
     getImages: async () => {
-        const response = await api.get('/oct-images/');
-        return response.data;
+        try {
+            const response = await api.get('/oct-images/');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching images:', error);
+            throw error;
+        }
     },
+    
     getImageById: async (id) => {
-        const response = await api.get(`/oct-images/${id}/`);
-        return response.data;
+        try {
+            const response = await api.get(`/oct-images/${id}/`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching image with ID ${id}:`, error);
+            throw error;
+        }
     },
 };
 
-// New Analysis Result service
+// Analysis Result service
 const analysisResultService = {
     getAnalysisResults: async () => {
-        const response = await api.get('/analysis-results/');
-        return response.data;
+        try {
+            const response = await api.get('/analysis-results/');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching analysis results:', error);
+            throw error;
+        }
     },
+    
     getAnalysisForImage: async (imageId) => {
-        const response = await api.get(`/analysis-results/?oct_image=${imageId}`);
-        return response.data;
-    },
+        try {
+            const response = await api.get(`/analysis-results/?oct_image=${imageId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching analysis for image ID ${imageId}:`, error);
+            return [];  // Return empty array on error to prevent UI crashes
+        }
+    }
 };
+
+
 
 // New Review service
 const reviewService = {
@@ -170,4 +208,4 @@ const reviewService = {
 
 };
 
-export { api, authService, octImageService, analysisResultService, reviewService };
+export { api, authService, octImageService, analysisResultService, reviewService, };

@@ -313,7 +313,7 @@ const Home = () => {
           </div>
         )}
         {/* check result button  end  */}
-        <div className="flex space-x-4 justify-end mr-10 mt-10">
+        <div className="flex space-x-4 justify-end mr-10 lg:mt-20">
           <Link
             to="upload"
             className="rounded-full bg-transparent border border-gray-600 text-white px-6 py-3 hover:text-gray-800 transition-all duration-300 tracking-wide text-sm"

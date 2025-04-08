@@ -136,7 +136,7 @@ const ReviewSection = ({ analysisResultId }) => {
             <textarea
               value={newReview.comments}
               onChange={(e) => setNewReview({ ...newReview, comments: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Write your comments here..."
               rows="3"
             />
